@@ -5,11 +5,11 @@ import (
 	"testing"
 )
 
-func TestGreet(t *testing.T){
+func TestGreet(t *testing.T) {
 	buffer := bytes.Buffer{}
-	Greet(&buffer, "Vishal")
+	Greet(&buffer, "alice")
 	got := buffer.String()
-	want := "Hello, Vishal"
+	want := "Hello, alice"
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}

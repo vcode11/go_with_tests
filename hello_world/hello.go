@@ -5,10 +5,10 @@ import (
 	"strings"
 )
 
-var language_hello  = map[string]string{
+var language_hello = map[string]string{
 	"english": "Hello",
 	"spanish": "Hola",
-	"french": "Bonjour",
+	"french":  "Bonjour",
 }
 
 func Hello(name string, language string) string {
@@ -24,5 +24,5 @@ func Hello(name string, language string) string {
 }
 
 func main() {
-	fmt.Println(Hello("Anna", ""))
+	fmt.Println(Hello("bob", ""))
 }
