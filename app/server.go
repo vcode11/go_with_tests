@@ -7,7 +7,7 @@ import (
 )
 
 type PlayerStore interface {
-	GetPlayerScore(name string) string
+	GetPlayerScore(name string) int
 }
 
 type PlayerStoreImpl struct{}
@@ -18,15 +18,20 @@ type PlayServer struct {
 
 func (p *PlayServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	player := strings.TrimPrefix(r.URL.Path, "/players/")
-	fmt.Fprintf(w, "%s", p.store.GetPlayerScore(player))
+	score := p.store.GetPlayerScore(player)
+	if score == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	fmt.Fprintf(w, "%d", score)
 }
 
-func (p PlayerStoreImpl) GetPlayerScore(player string) string {
+func (p PlayerStoreImpl) GetPlayerScore(player string) int {
 	if player == "pepper" {
-		return "20"
+		return 20
 	}
 	if player == "floyd" {
-		return "10"
+		return 10
 	}
-	return "unknown"
+	return 0
 }
