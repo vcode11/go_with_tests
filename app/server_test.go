@@ -33,6 +33,7 @@ func TestGetPlayers(t *testing.T) {
 		assertStatus(t, response.Code, http.StatusOK)
 		assertResponseBody(t, got, "20")
 	})
+
 	t.Run("return Floyd's score", func(t *testing.T) {
 		request := getScoreRequest("floyd")
 		response := httptest.NewRecorder()
@@ -41,6 +42,7 @@ func TestGetPlayers(t *testing.T) {
 		got := response.Body.String()
 		assertResponseBody(t, got, "10")
 	})
+
 	t.Run("Handle missing player score", func(t *testing.T) {
 		request := getScoreRequest("random_player_who_doesn't exist")
 		response := httptest.NewRecorder()
