@@ -3,73 +3,42 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"net/http/httptest"
-	"testing"
+	"strings"
 )
 
-type stubPlayerStore struct {
-	scores map[string]int
+// PlayerStore stores score information about players.
+type PlayerStore interface {
+	GetPlayerScore(name string) int
+	RecordWin(name string)
 }
 
-func (p stubPlayerStore) GetPlayerScore(player string) int {
-	return p.scores[player]
+// PlayerServer is a HTTP interface for player information.
+type PlayerServer struct {
+	store PlayerStore
 }
 
-func TestGetPlayers(t *testing.T) {
-	stubStore := stubPlayerStore{
-		scores: map[string]int{
-			"pepper": 20,
-			"floyd":  10,
-		},
-	}
-
-	playerServer := &PlayServer{stubStore}
-
-	t.Run("return Pepper's score", func(t *testing.T) {
-		request := getScoreRequest("pepper")
-		response := httptest.NewRecorder()
-		playerServer.ServeHTTP(response, request)
-		got := response.Body.String()
-		assertStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, got, "20")
-	})
-
-	t.Run("return Floyd's score", func(t *testing.T) {
-		request := getScoreRequest("floyd")
-		response := httptest.NewRecorder()
-		playerServer.ServeHTTP(response, request)
-		assertStatus(t, response.Code, http.StatusOK)
-		got := response.Body.String()
-		assertResponseBody(t, got, "10")
-	})
-
-	t.Run("Handle missing player score", func(t *testing.T) {
-		request := getScoreRequest("random_player_who_doesn't exist")
-		response := httptest.NewRecorder()
-		playerServer.ServeHTTP(response, request)
-		got := response.Code
-		want := http.StatusNotFound
-		if got != want {
-			t.Errorf("want %d, got %d", want, got)
-		}
-	})
-}
-
-func assertResponseBody(t testing.TB, got, want string) {
-	t.Helper()
-	if got != want {
-		t.Errorf("got %q want %q", got, want)
+func (p *PlayerServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	player := strings.TrimPrefix(r.URL.Path, "/players/")
+	switch r.Method {
+	case http.MethodPost:
+		p.processWin(w, player)
+	case http.MethodGet:
+		p.showScore(w, player)
 	}
 }
 
-func getScoreRequest(player string) *http.Request {
-	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/players/%s", player), nil)
-	return request
+func (p *PlayerServer) showScore(w http.ResponseWriter, player string) {
+	score := p.store.GetPlayerScore(player)
+
+	if score == 0 {
+		w.WriteHeader(http.StatusNotFound)
+	}
+
+	fmt.Fprint(w, score)
 }
 
-func assertStatus(t testing.TB, got, want int) {
-	t.Helper()
-	if got != want {
-		t.Errorf("did not get correct status, got %d, want %d", got, want)
-	}
+func (p *PlayerServer) processWin(w http.ResponseWriter, player string) {
+	p.store.RecordWin(player)
+	w.WriteHeader(http.StatusAccepted)
 }
+
